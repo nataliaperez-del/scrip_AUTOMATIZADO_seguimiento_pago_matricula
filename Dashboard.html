@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Google Sans', Arial, sans-serif; background: #f8f9fa; color: #202124; }
+
+  .header { background: #1a1a2e; color: #fff; padding: 14px 20px; }
+  .header p  { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.6; margin-bottom: 2px; }
+  .header h1 { font-size: 15px; font-weight: 500; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding: 16px 20px; }
+  .kpi { background: #fff; border-radius: 10px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .kpi .label { font-size: 11px; color: #5f6368; margin-bottom: 4px; }
+  .kpi .value { font-size: 30px; font-weight: 500; }
+  .kpi.verde .value { color: #1D9E75; }
+  .kpi.rojo  .value { color: #E24B4A; }
+  .kpi.ambar .value { color: #BA7517; }
+
+  .section { padding: 0 20px 14px; }
+  .section-title { font-size: 13px; font-weight: 500; color: #202124; margin-bottom: 2px; }
+  .section-sub   { font-size: 11px; color: #5f6368; margin-bottom: 6px; }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 4px; }
+  .legend span { font-size: 11px; color: #5f6368; display: flex; align-items: center; gap: 5px; }
+  .legend .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .chart-wrap { width: 100%; height: 195px; }
+  .chart-empty { height: 195px; display: flex; align-items: center; justify-content: center;
+                 color: #9aa0a6; font-size: 12px; background: #fff; border-radius: 8px; }
+
+  .divider { height: 1px; background: #e8eaed; margin: 4px 20px 14px; }
+  .footer  { text-align: center; padding: 10px; font-size: 10px; color: #9aa0a6; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <p>Panel docente · <?= periodo ?></p>
+  <h1>Seguimiento de matrículas UNAD</h1>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi verde">
+    <div class="label">Pagos realizados</div>
+    <div class="value"><?= matriculados ?></div>
+  </div>
+  <div class="kpi rojo">
+    <div class="label">Pendiente pago</div>
+    <div class="value"><?= pendPago ?></div>
+  </div>
+  <div class="kpi ambar">
+    <div class="label">Pendiente inscripción</div>
+    <div class="value"><?= pendInscripcion ?></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Avance hacia la matrícula</div>
+  <div class="section-sub">Evolución de estados en el tiempo</div>
+  <div class="legend">
+    <span><span class="dot" style="background:#1D9E75"></span>Pagados</span>
+    <span><span class="dot" style="background:#E24B4A"></span>Pend. pago</span>
+    <span><span class="dot" style="background:#BA7517"></span>Pend. inscripción</span>
+  </div>
+  <div class="chart-wrap" id="lineChart"></div>
+</div>
+
+<div class="divider"></div>
+
+<div class="section">
+  <div class="section-title">Gestión docente</div>
+  <div class="section-sub">Consultas RCA y correos enviados</div>
+  <div class="legend">
+    <span><span class="dot" style="background:#185FA5"></span>Consultas RCA</span>
+    <span><span class="dot" style="background:#1D9E75"></span>Correos enviados</span>
+  </div>
+  <div class="chart-wrap" id="barChart"></div>
+</div>
+
+<div class="footer">Actualizado: <?= fechaActualizacion ?> · Demo de Cortesía UNAD</div>
+
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+const H = <?!= histJson ?>;
+
+google.charts.load('current', {packages: ['corechart']});
+google.charts.setOnLoadCallback(function () {
+
+  // ── Línea: evolución de estados ──────────────────────────────
+  var lineEl = document.getElementById('lineChart');
+  if (H.labels && H.labels.length > 0) {
+    var dt = new google.visualization.DataTable();
+    dt.addColumn('string', 'Fecha');
+    dt.addColumn('number', 'Pagados');
+    dt.addColumn('number', 'Pend. Pago');
+    dt.addColumn('number', 'Pend. Inscripción');
+    for (var i = 0; i < H.labels.length; i++) {
+      dt.addRow([H.labels[i], H.pagados[i]||0, H.pendPago[i]||0, H.pendInsc[i]||0]);
+    }
+    new google.visualization.LineChart(lineEl).draw(dt, {
+      backgroundColor: 'transparent',
+      legend: {position: 'none'},
+      colors: ['#1D9E75', '#E24B4A', '#BA7517'],
+      chartArea: {width: '88%', height: '74%'},
+      hAxis: {textStyle: {fontSize: 10}, slantedText: true, slantedTextAngle: 30},
+      vAxis: {textStyle: {fontSize: 10}, minValue: 0,
+              title: 'Estudiantes', titleTextStyle: {fontSize: 10}},
+      lineWidth: 2, pointSize: 5, curveType: 'function'
+    });
+  } else {
+    lineEl.innerHTML = '<div class="chart-empty">Sin datos históricos — ejecuta el Paso 1 primero</div>';
+  }
+
+  // ── Barras: gestión docente ───────────────────────────────────
+  var barEl = document.getElementById('barChart');
+  var tieneGestion = (H.rca    && H.rca.some(function(v){return v > 0;})) ||
+                     (H.correos && H.correos.some(function(v){return v > 0;}));
+  if (H.semanas && H.semanas.length > 0 && tieneGestion) {
+    var dt2 = new google.visualization.DataTable();
+    dt2.addColumn('string', 'Fecha');
+    dt2.addColumn('number', 'Consultas RCA');
+    dt2.addColumn('number', 'Correos');
+    for (var j = 0; j < H.semanas.length; j++) {
+      dt2.addRow([H.semanas[j], H.rca[j]||0, H.correos[j]||0]);
+    }
+    new google.visualization.ColumnChart(barEl).draw(dt2, {
+      backgroundColor: 'transparent',
+      legend: {position: 'none'},
+      colors: ['#185FA5', '#1D9E75'],
+      chartArea: {width: '85%', height: '72%'},
+      hAxis: {textStyle: {fontSize: 10}, slantedText: true, slantedTextAngle: 30},
+      vAxis: {textStyle: {fontSize: 10}, minValue: 0,
+              title: 'Acciones', titleTextStyle: {fontSize: 10}},
+      bar: {groupWidth: '60%'}
+    });
+  } else {
+    barEl.innerHTML = '<div class="chart-empty">Sin datos de gestión — ejecuta el Paso 1 o 2 primero</div>';
+  }
+
+});
+</script>
+</body>
+</html>
