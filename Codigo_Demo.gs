@@ -37,9 +37,9 @@ const CONFIG = {
 
   URL_RCA:         'https://rca.unad.edu.co/moodle/servicios/inicio.php',
   URL_INSCRIPCION: 'https://rca.unad.edu.co/moodle/preinscripcion/preinscripcion/home.php?Tan5UdE=872&nivel=1,2,5,7,10&asidAYa6tibaNU=1332',
-  URL_FORMULARIO:  'https://docs.google.com/forms/d/e/1FAIpQLSfDnUXoczw562M6gae23J4V-IkD5sfPc6O6-eT1bFYy8YF-ZA/viewform', // ⚠️
+  URL_FORMULARIO:  'Copiar aqui el enlace de forms completo', // ⚠️
 
-  SPREADSHEET_ID: '1douveFBBwxoW68ABieXtrFD0FW-G08gB3aQGW8hs8Lk', // ⚠️
+  SPREADSHEET_ID: 'Copiar aqui el id que encuentras en el enlace del excel en drive entre el / numero 3 ejemplo : https://docs.google.com/spreadsheets/d/   Copia esta parte   1douveFBBwxoW68ABieXtrFD0FW-G99gB4aQGW8hs8Lk   Copia esta parte     /edit?gid=0#gid=0 ', // ⚠️
 
   // Valor del campo "peraca" en el formulario RCA. Actualizar cada semestre.
   // 2026 II PERIODO 16-04 → 2204
