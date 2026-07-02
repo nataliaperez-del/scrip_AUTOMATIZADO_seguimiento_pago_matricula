@@ -15,7 +15,7 @@ Google Sheets (3 hojas)
 └── Dashboard                  ← KPIs en vivo (filas 1-2) + tabla histórica (filas 5+)
 
 Apps Script (2 archivos)
-├── Codigo_Demo_Cortesia.gs    ← Lógica principal
+├── Codigo_Demo.gs    ← Lógica principal
 └── Dashboard.html             ← Panel visual con Google Charts
 ```
 
