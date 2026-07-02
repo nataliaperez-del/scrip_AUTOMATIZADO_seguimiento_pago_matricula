@@ -1,4 +1,4 @@
-# 🎓 Automatización de Seguimiento de Matrículas UNAD — Demo de Cortesía
+# 🎓 Automatización de Seguimiento de Matrículas UNAD — Demo
 
 Demo de código abierto para gestionar y dar seguimiento al proceso de matrícula de estudiantes en la UNAD, implementada 100% sobre Google Workspace (Sheets + Apps Script + Forms + Gmail).
 
