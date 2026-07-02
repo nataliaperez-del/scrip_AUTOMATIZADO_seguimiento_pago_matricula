@@ -1,5 +1,5 @@
 /**
- * Automatización de Matrículas — Demo de Cortesía
+ * Automatización de Matrículas — Demo
  * Autora  : Natalia Elizabeth Pérez C.
  * Licencia: Apache 2.0 — http://www.apache.org/licenses/LICENSE-2.0
  *
