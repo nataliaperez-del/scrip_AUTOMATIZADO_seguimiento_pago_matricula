@@ -65,23 +65,19 @@ const CONFIG = {
   URL_INSCRIPCION: 'https://rca.unad.edu.co/moodle/preinscripcion/preinscripcion/home.php?Tan5UdE=872&nivel=1,2,5,7,10&asidAYa6tibaNU=1332',
 
   // 🔗 Enlace público del formulario (el mismo que le compartes a los estudiantes)
-  
-URL_FORMULARIO: '📋 COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️ reemplaza este valor completo
+  URL_FORMULARIO: '📋 COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️ reemplaza este valor completo
 
-  //  ID de tu Google Sheets — se saca de la URL del archivo:
+  // 🆔 ID de tu Google Sheets — se saca de la URL del archivo:
   //    https://docs.google.com/spreadsheets/d/ 👉 ESTA-ES-LA-PARTE-QUE-COPIAS 👈 /edit?gid=0
   //    Ejemplo real: 19nRKQdmYLugoWaKzjmUGL6DHZu9lwqY1uAt9m_UJTr0
-  
-SPREADSHEET_ID: '📋 COPIE AQUI EL ID DEL EXCEL GOOGLE', // ⚠️ reemplaza este valor completo
+  SPREADSHEET_ID: '📋 COPIE AQUI EL ID DEL EXCEL GOOGLE', // ⚠️ reemplaza este valor completo
 
   // Valor del campo "peraca" en el formulario RCA. Actualizar cada semestre.
   // 2026 II PERIODO 16-04 → 2204
-  
-PERIODO_RCA: '2204',
+  PERIODO_RCA: '2204',
 
-  // Opcional — solo si quieres que los correos se redacten con IA (Gemini)
-  
-GEMINI_API_KEY: '📋 COPIE AQUI EL lA API' // ⚠️ opcional — https://aistudio.google.com/app/apikey
+  // 🤖 Opcional — solo si quieres que los correos se redacten con IA (Gemini)
+  GEMINI_API_KEY: '' // ⚠️ opcional — https://aistudio.google.com/app/apikey
 };
 
 
@@ -96,6 +92,7 @@ function onOpen() {
     .addItem('⚡ 3. Ejecutar todo',      'menuEjecutarTodo')
     .addSeparator()
     .addItem('📊 4. Dashboard',          'menuDashboard')
+    .addItem('🐞 5. Ver errores del sistema', 'menuVerErrores')
     .addToUi();
 }
 
@@ -103,6 +100,13 @@ function menuVerificarRCA()  { ejecutarFlujo('SOLO_RCA');     }
 function menuEnviarCorreos() { ejecutarFlujo('SOLO_CORREOS'); }
 function menuEjecutarTodo()  { ejecutarFlujo('TODO');         }
 function menuDashboard()     { paso3_ActualizarDashboard();   }
+
+function menuVerErrores() {
+  const ss   = SpreadsheetApp.getActiveSpreadsheet();
+  const hoja = ss.getSheetByName('Errores_Sistema');
+  if (!hoja) { mostrarAlerta('✅ No hay errores registrados todavía.'); return; }
+  ss.setActiveSheet(hoja);
+}
 
 
 // ─── ORQUESTADOR ─────────────────────────────────────────────────────────────
@@ -235,7 +239,9 @@ function paso2_EnviarCorreos(sheet, datos) {
       });
       datos[i][idxCorreoObs] = '[' + ts + '] Correo Enviado';
       enviados++;
-    } catch (_) {}
+    } catch (err) {
+      registrarError('paso2_EnviarCorreos', 'No se pudo enviar correo a ' + email + ' (' + nombre + '): ' + err.message);
+    }
   }
 
   if (enviados > 0) {
@@ -354,33 +360,36 @@ function _registrarHistorico(ss, matriculados, pendPago, pendInscripcion, correo
 // ─── TRIGGER — FORMULARIO DE PAGO / NOVEDAD ─────────────────────────────────
 
 function alEnviarFormulario(e) {
-  if (!e || !e.values) { Logger.log('❌ Evento vacío — el trigger no recibió datos'); return; }
+  if (!e || !e.values) { registrarError('alEnviarFormulario', 'Evento vacío — el trigger no recibió datos del formulario'); return; }
 
   const ss         = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
   const sheetForms = ss.getSheetByName(CONFIG.FORMS_SHEET);
-  if (!sheetForms) { Logger.log('❌ Hoja de respuestas no encontrada: "' + CONFIG.FORMS_SHEET + '"'); return; }
+  if (!sheetForms) { registrarError('alEnviarFormulario', 'Hoja de respuestas no encontrada: "' + CONFIG.FORMS_SHEET + '"'); return; }
 
   const encabezados = sheetForms.getDataRange().getValues()[0];
   const idxDocForm   = buscarCol(encabezados, CONFIG.COL_DOC_FORM);
   const idxPagoForm  = buscarCol(encabezados, CONFIG.COL_PAGO_FORM);
   const idxNovForm   = buscarCol(encabezados, CONFIG.COL_NOVEDAD_FORM);
 
-  if (idxDocForm === -1) { Logger.log('❌ Columna de documento no encontrada. Encabezados: ' + JSON.stringify(encabezados)); return; }
+  if (idxDocForm === -1) {
+    registrarError('alEnviarFormulario', 'No se encontró la columna de documento. Revisa que CONFIG.COL_DOC_FORM coincida exacto con la pregunta del Forms. Encabezados reales: ' + JSON.stringify(encabezados));
+    return;
+  }
 
   const documento = String(e.values[idxDocForm] || '').replace(/\D/g, '');
-  if (!documento) { Logger.log('❌ Documento vacío tras normalizar'); return; }
+  if (!documento) { registrarError('alEnviarFormulario', 'El documento llegó vacío tras normalizar la respuesta del formulario'); return; }
 
   const respuestaPago = idxPagoForm !== -1 ? limpiarTexto(e.values[idxPagoForm]) : 'si';
   const yaPago  = respuestaPago === 'si' || respuestaPago === 'sí';
   const novedad = idxNovForm !== -1 ? String(e.values[idxNovForm] || '').trim() : '';
 
   const sheetData = ss.getSheetByName(CONFIG.SHEET_NAME);
-  if (!sheetData) { Logger.log('❌ Hoja Base no encontrada'); return; }
+  if (!sheetData) { registrarError('alEnviarFormulario', 'Hoja "' + CONFIG.SHEET_NAME + '" no encontrada'); return; }
 
   const datos     = sheetData.getDataRange().getValues();
   const idxDoc    = buscarCol(datos[0], CONFIG.COL_DOC);
   const idxEstado = buscarCol(datos[0], CONFIG.COL_ESTADO);
-  if (idxDoc === -1 || idxEstado === -1) { Logger.log('❌ Columnas Base no encontradas'); return; }
+  if (idxDoc === -1 || idxEstado === -1) { registrarError('alEnviarFormulario', 'Columnas "Documento" o "Estado" no encontradas en la hoja Base'); return; }
 
   const ts = timestamp();
   let encontrado = false;
@@ -406,7 +415,9 @@ function alEnviarFormulario(e) {
     break;
   }
 
-  if (!encontrado) Logger.log('❌ Documento "' + documento + '" no encontrado en Base');
+  if (!encontrado) {
+    registrarError('alEnviarFormulario', 'Documento "' + documento + '" no encontrado en la hoja Base. Revisa si tiene puntos, espacios, o si el estudiante no está en la lista.');
+  }
 }
 
 
@@ -468,6 +479,31 @@ function timestamp() {
 
 function mostrarAlerta(msg) {
   try { SpreadsheetApp.getUi().alert(msg); } catch (_) {}
+}
+
+// ─── ERRORES VISIBLES EN EL EXCEL ────────────────────────────────────────────
+// En vez de que los fallos queden escondidos en el log técnico de Apps Script,
+// se registran en una hoja "Errores_Sistema" (pestaña roja) dentro del propio
+// Excel — cualquiera que lo abra los ve, sin necesidad de entrar al código.
+
+function registrarError(origen, mensaje) {
+  Logger.log('❌ [' + origen + '] ' + mensaje); // se mantiene también en el log técnico
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    let hoja = ss.getSheetByName('Errores_Sistema');
+    if (!hoja) {
+      hoja = ss.insertSheet('Errores_Sistema');
+      hoja.getRange('A1:C1')
+          .setValues([['Fecha', 'Dónde ocurrió', 'Qué pasó']])
+          .setFontWeight('bold').setBackground('#E24B4A').setFontColor('#ffffff');
+      hoja.setFrozenRows(1);
+      hoja.setColumnWidth(1, 130);
+      hoja.setColumnWidth(2, 200);
+      hoja.setColumnWidth(3, 550);
+    }
+    hoja.setTabColor('#E24B4A'); // pestaña roja — visible incluso sin abrirla
+    hoja.appendRow([timestamp(), origen, mensaje]);
+  } catch (_) { /* si esto también falla, ya no hay más capas — queda solo el log técnico */ }
 }
 
 
