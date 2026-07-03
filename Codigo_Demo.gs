@@ -56,20 +56,32 @@ const CONFIG = {
   COL_PAGO_FORM:    '¿Ya realizaste el pago de tu matrícula?',
   COL_NOVEDAD_FORM: 'Si tu respuesta fue "No", cuéntanos qué novedad tienes con tu matrícula',
 
-  ESTADO_PAGADO:  'El pago fue realizado',
-  ESTADO_NOVEDAD: 'Novedad reportada',
+  ESTADO_PAGADO:          'El pago fue realizado',
+  ESTADO_NOVEDAD:         'Novedad reportada',
+  ESTADO_PEND_PAGO:       'Pendiente pago',
+  ESTADO_PEND_INSCRIPCION:'Pendiente inscripción y pago',
 
   URL_RCA:         'https://rca.unad.edu.co/moodle/servicios/inicio.php',
   URL_INSCRIPCION: 'https://rca.unad.edu.co/moodle/preinscripcion/preinscripcion/home.php?Tan5UdE=872&nivel=1,2,5,7,10&asidAYa6tibaNU=1332',
-  URL_FORMULARIO:  'COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️
 
-  SPREADSHEET_ID: 'COPIE AQUI EL IDE DEL EXCEL GOOGLE DESDE EL TERCER /', // ⚠️
+  // 🔗 Enlace público del formulario (el mismo que le compartes a los estudiantes)
+  
+URL_FORMULARIO: '📋 COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️ reemplaza este valor completo
+
+  //  ID de tu Google Sheets — se saca de la URL del archivo:
+  //    https://docs.google.com/spreadsheets/d/ 👉 ESTA-ES-LA-PARTE-QUE-COPIAS 👈 /edit?gid=0
+  //    Ejemplo real: 19nRKQdmYLugoWaKzjmUGL6DHZu9lwqY1uAt9m_UJTr0
+  
+SPREADSHEET_ID: '📋 COPIE AQUI EL ID DEL EXCEL GOOGLE', // ⚠️ reemplaza este valor completo
 
   // Valor del campo "peraca" en el formulario RCA. Actualizar cada semestre.
   // 2026 II PERIODO 16-04 → 2204
-  PERIODO_RCA: '2204',
+  
+PERIODO_RCA: '2204',
 
-  GEMINI_API_KEY: 'COPIE AQUI LA API DE GOOGLE' // ⚠️ opcional — https://aistudio.google.com/app/apikey
+  // Opcional — solo si quieres que los correos se redacten con IA (Gemini)
+  
+GEMINI_API_KEY: '📋 COPIE AQUI EL lA API' // ⚠️ opcional — https://aistudio.google.com/app/apikey
 };
 
 
@@ -154,9 +166,9 @@ function paso1_VerificarRCA(sheet, datos) {
     let textoObs    = '[' + ts + '] ';
 
     switch (rca) {
-      case 'PAGADO':      nuevoEstado = CONFIG.ESTADO_PAGADO;            textoObs += 'El pago fue realizado';         break;
-      case 'PENDIENTE':   nuevoEstado = 'Pendiente pago';                textoObs += 'Pendiente pago';                break;
-      case 'NO_INSCRITO': nuevoEstado = 'Pendiente inscripción y pago';  textoObs += 'Pendiente inscripción y pago';  break;
+      case 'PAGADO':      nuevoEstado = CONFIG.ESTADO_PAGADO;           textoObs += CONFIG.ESTADO_PAGADO;           break;
+      case 'PENDIENTE':   nuevoEstado = CONFIG.ESTADO_PEND_PAGO;        textoObs += CONFIG.ESTADO_PEND_PAGO;        break;
+      case 'NO_INSCRITO': nuevoEstado = CONFIG.ESTADO_PEND_INSCRIPCION; textoObs += CONFIG.ESTADO_PEND_INSCRIPCION; break;
       case 'ERROR':       textoObs += '⚠️ Error de conexión RCA — verificar manualmente';          break;
       case 'DESCONOCIDO': textoObs += '⚠️ Respuesta no identificada del RCA — verificar manualmente'; break;
     }
@@ -171,8 +183,8 @@ function paso1_VerificarRCA(sheet, datos) {
     datos[r.fila][idxEstado] = r.nuevoEstado;
     datos[r.fila][idxObs]   = r.textoObs;
     if (r.nuevoEstado === CONFIG.ESTADO_PAGADO)                 pagados++;
-    else if (r.nuevoEstado === 'Pendiente pago')                pendP++;
-    else if (r.nuevoEstado === 'Pendiente inscripción y pago')  pendI++;
+    else if (r.nuevoEstado === CONFIG.ESTADO_PEND_PAGO)         pendP++;
+    else if (r.nuevoEstado === CONFIG.ESTADO_PEND_INSCRIPCION)  pendI++;
   }
   guardar(sheet, datos);
   _registrarHistorico(SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID), pagados, pendP, pendI, 0, resultados.length);
@@ -255,9 +267,9 @@ function paso3_ActualizarDashboard() {
   for (let i = 1; i < datos.length; i++) {
     const estado    = limpiarTexto(datos[i][idxEstado] || '');
     const ultimaObs = limpiarTexto(getUltimaObservacion(datos[i], obsCols));
-    if (estado === limpiarTexto(CONFIG.ESTADO_PAGADO))    matriculados++;
-    else if (ultimaObs.includes('inscripcion'))           pendInscripcion++;
-    else if (ultimaObs.includes('pendiente pago'))        pendPago++;
+    if (estado === limpiarTexto(CONFIG.ESTADO_PAGADO))                        matriculados++;
+    else if (ultimaObs.includes(limpiarTexto(CONFIG.ESTADO_PEND_INSCRIPCION))) pendInscripcion++;
+    else if (ultimaObs.includes(limpiarTexto(CONFIG.ESTADO_PEND_PAGO)))        pendPago++;
     // Los estudiantes con "Novedad reportada" no se cuentan aquí a propósito.
   }
 
