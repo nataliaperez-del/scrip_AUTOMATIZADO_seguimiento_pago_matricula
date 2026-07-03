@@ -61,15 +61,15 @@ const CONFIG = {
 
   URL_RCA:         'https://rca.unad.edu.co/moodle/servicios/inicio.php',
   URL_INSCRIPCION: 'https://rca.unad.edu.co/moodle/preinscripcion/preinscripcion/home.php?Tan5UdE=872&nivel=1,2,5,7,10&asidAYa6tibaNU=1332',
-  URL_FORMULARIO:  'https://docs.google.com/forms/d/e/1FAIpQLSfDnUXoczw562M6gae23J4V-IkD5sfPc6O6-eT1bFYy8YF-ZA/viewform', // ⚠️
+  URL_FORMULARIO:  'COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️
 
-  SPREADSHEET_ID: '1douveFBBwxoW68ABieXtrFD0FW-G08gB3aQGW8hs8Lk', // ⚠️
+  SPREADSHEET_ID: 'COPIE AQUI EL IDE DEL EXCEL GOOGLE DESDE EL TERCER /', // ⚠️
 
   // Valor del campo "peraca" en el formulario RCA. Actualizar cada semestre.
   // 2026 II PERIODO 16-04 → 2204
   PERIODO_RCA: '2204',
 
-  GEMINI_API_KEY: '' // ⚠️ opcional — https://aistudio.google.com/app/apikey
+  GEMINI_API_KEY: 'COPIE AQUI LA API DE GOOGLE' // ⚠️ opcional — https://aistudio.google.com/app/apikey
 };
 
 
