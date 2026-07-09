@@ -10,7 +10,7 @@
  * Flujo:
  *   paso1_VerificarRCA        → Consulta el RCA y registra resultado en ObservacionN.
  *   paso2_EnviarCorreos       → Envía correo a todos los pendientes CADA VEZ que el
- *                                profesor presiona el botón del menú. Sin límite de
+ *                                usuario presiona el botón del menú. Sin límite de
  *                                tiempo ni cooldown — control 100% manual, ningún envío
  *                                automático. Cada ejecución agrega una columna
  *                                ObservacionN nueva con el registro de ese envío.
@@ -64,19 +64,19 @@ const CONFIG = {
   URL_RCA:         'https://rca.unad.edu.co/moodle/servicios/inicio.php',
   URL_INSCRIPCION: 'https://rca.unad.edu.co/moodle/preinscripcion/preinscripcion/home.php?Tan5UdE=872&nivel=1,2,5,7,10&asidAYa6tibaNU=1332',
 
-  // 🔗 Enlace público del formulario (el mismo que le compartes a los estudiantes)
-  URL_FORMULARIO: '📋 COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️ reemplaza este valor completo
+  //  Enlace público del formulario (el mismo que le compartes a los estudiantes)
+  URL_FORMULARIO: ' COPIE AQUI EL ENLACE DEL FORMULARIO PUBLICADO', // ⚠️ reemplaza este valor completo
 
-  // 🆔 ID de tu Google Sheets — se saca de la URL del archivo:
+  //  ID de tu Google Sheets — se saca de la URL del archivo:
   //    https://docs.google.com/spreadsheets/d/ 👉 ESTA-ES-LA-PARTE-QUE-COPIAS 👈 /edit?gid=0
   //    Ejemplo real: 19nRKQdmYLugoWaKzjmUGL6DHZu9lwqY1uAt9m_UJTr0
-  SPREADSHEET_ID: '📋 COPIE AQUI EL ID DEL EXCEL GOOGLE', // ⚠️ reemplaza este valor completo
+  SPREADSHEET_ID: ' COPIE AQUI EL ID DEL EXCEL GOOGLE', // ⚠️ reemplaza este valor completo
 
   // Valor del campo "peraca" en el formulario RCA. Actualizar cada semestre.
   // 2026 II PERIODO 16-04 → 2204
   PERIODO_RCA: '2204',
 
-  // 🤖 Opcional — solo si quieres que los correos se redacten con IA (Gemini)
+  //  Opcional — solo si quieres que los correos se redacten con IA (Gemini)
   GEMINI_API_KEY: '' // ⚠️ opcional — https://aistudio.google.com/app/apikey
 };
 
@@ -234,7 +234,7 @@ function paso2_EnviarCorreos(sheet, datos) {
     try {
       MailApp.sendEmail({
         to:       email,
-        subject:  '📚 Tu matrícula UNAD: acción requerida, ' + nombre,
+        subject:  ' Tu matrícula UNAD: acción requerida, ' + nombre,
         htmlBody: redactarCorreo(nombre, ultimaObs)
       });
       datos[i][idxCorreoObs] = '[' + ts + '] Correo Enviado';
